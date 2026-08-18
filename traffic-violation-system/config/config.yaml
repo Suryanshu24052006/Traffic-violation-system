@@ -1,0 +1,132 @@
+# =============================================================================
+# Smart Traffic Violation & Risk Profiling System — Configuration
+# =============================================================================
+# All thresholds below are configurable and set to typical Indian traffic-law
+# defaults. Adjust per city/state (these vary — e.g. Delhi vs. Bengaluru have
+# different heavy-vehicle entry timing rules).
+
+detection:
+  model: "models/yolov8n.pt"   # pretrained COCO checkpoint; swap for a
+                                 # fine-tuned weights file (see models/README.md)
+  confidence_threshold: 0.35
+  vehicle_classes:              # COCO class names this system treats as "vehicle"
+    - car
+    - motorcycle
+    - bus
+    - truck
+  device: "cpu"                 # set to "cuda" if a GPU is available
+
+tracking:
+  tracker: "bytetrack"
+  track_activation_threshold: 0.25
+  lost_track_buffer: 30         # frames to keep a lost track alive
+  minimum_matching_threshold: 0.8
+
+speed_estimation:
+  # Source polygon (pixel coords) -> target rectangle (real-world meters).
+  # These MUST be recalibrated per camera using known reference points
+  # (e.g. lane-marking spacing). Placeholder values assume a ~25m x 10m
+  # road segment viewed at an angle, typical of a fixed CCTV pole camera.
+  source_polygon:
+    - [0, 0]
+    - [0, 0]
+    - [0, 0]
+    - [0, 0]
+  target_width_m: 10
+  target_height_m: 25
+  fps_override: null            # null = read from video metadata
+
+  # Speed limits in km/h, by road type and vehicle type (Indian MV Act defaults)
+  speed_limits_kmph:
+    city_road:
+      car: 50
+      motorcycle: 50
+      bus: 40
+      truck: 40
+    highway:
+      car: 100
+      motorcycle: 80
+      bus: 80
+      truck: 80
+  active_road_type: "city_road"
+  tolerance_kmph: 5              # grace margin before flagging a violation
+
+truck_hours:
+  # Heavy vehicles (bus/truck) restricted from active_road_type during
+  # these hours (24h clock), mirroring metro heavy-vehicle-entry timing rules.
+  restricted_classes:
+    - truck
+    - bus
+  allowed_window:
+    start: "23:00"
+    end: "07:00"
+  # anything detected OUTSIDE the allowed_window on a restricted road = violation
+
+helmet:
+  model: "models/helmet_yolov8.pt"   # NOT included — must be fine-tuned,
+                                       # see src/helmet/train_helmet.py
+  confidence_threshold: 0.4
+  applies_to_classes:
+    - motorcycle
+
+anpr:
+  detector_model: "models/plate_yolov8.pt"  # NOT included — see src/anpr/train_anpr.py
+  ocr_engine: "easyocr"                      # or "paddleocr"
+  ocr_languages: ["en"]
+  # Indian plate format: 2 letters (state) + 2 digits (RTO code) +
+  # 1-2 letters (series) + 4 digits, e.g. "MH12AB1234"
+  plate_regex: '^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$'
+
+risk_engine:
+  # Transparent, explainable weighted-rule scoring (see README for rationale
+  # on why this is a rule engine and not a black-box model on synthetic data).
+  weights:
+    past_challan_count: 0.20      # normalized, capped at 10 challans
+    unpaid_challan_ratio: 0.15
+    intoxication_flag: 0.25
+    hit_and_run_flag: 0.30
+    current_session_violations: 0.10   # normalized, capped at 3 simultaneous
+  category_thresholds:
+    low: 0.25
+    medium: 0.50
+    high: 0.75
+    # >= high -> "critical"
+
+  # Driver-level (license-number-keyed) score — aggregates across every
+  # vehicle registered to one person, so caps are scaled up accordingly.
+  # See db_manager.get_owner_profile / risk_engine.compute_driver_risk_score.
+  driver_weights:
+    total_challan_count: 0.20     # normalized, capped at 20 (across all vehicles)
+    unpaid_challan_ratio: 0.15
+    intoxication_flag: 0.30
+    hit_and_run_flag: 0.35
+  driver_category_thresholds:
+    low: 0.25
+    medium: 0.50
+    high: 0.75
+
+database:
+  path: "database/traffic_system.db"
+
+paths:
+  outputs_dir: "outputs"
+  violation_snapshots_dir: "outputs/snapshots"
+  municipal_reports_dir: "outputs/municipal_reports"
+
+# Accident-hotspot / municipal-alert reporting — turns recurring violation
+# patterns at a camera location into a structured report the municipal
+# corporation / traffic police could actually act on. See src/hotspot/.
+municipal:
+  lookback_days: 30              # how far back to look when a report is generated
+  violation_count_threshold_high: 15   # flag as high-priority even with no prior black-spot record
+  canonical_heatmap_size: [640, 480]   # normalizes violation locations across cameras of different resolutions
+  safety_priority_weights:
+    violation_density: 0.35      # how many violations this window, vs. threshold
+    historical_accidents: 0.30   # from accident_black_spots, if this camera has one
+    fatal_accidents: 0.25        # fatal accidents weigh far more than the raw count
+    official_rating: 0.10        # existing official low/medium/high/critical rating, if any
+  recommended_actions:
+    overspeeding: "Install speed-enforcement camera / rumble strips; review posted speed limit and signage."
+    no_helmet: "Increase helmet-compliance enforcement patrols, especially during peak two-wheeler hours."
+    truck_hours: "Review heavy-vehicle entry signage and enforcement timing at this junction."
+    default: "Increase monitoring frequency and schedule a junction design/safety review."

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+database/*.db
+outputs/*
+!outputs/.gitkeep
+models/*.pt
+!models/README.md
+runs/
+*.mp4
+.DS_Store
