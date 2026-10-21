@@ -1,6 +1,4 @@
 """
-seed_data.py
-============
 Populates the mock "fixed database" with synthetic-but-realistic Indian
 records: drivers (owners, keyed by license number - see schema.sql for why
 that's the real key, not name), their vehicles, challan history,

@@ -1,6 +1,4 @@
 """
-heatmap.py
-============
 Builds a vehicle-density heatmap from every tracked position observed during
 a run (VehicleTracker.get_all_points()). Manual accumulation + Gaussian blur
 + colormap - deliberately not dependent on any one CV library's built-in

@@ -1,6 +1,4 @@
 """
-train_helmet.py
-==================
 Fine-tunes a YOLOv8 classification/detection head for helmet / no_helmet
 on two-wheeler riders. This is the "extreme fine-tuning" piece of the
 project - the part that's actually hard and actually differentiates this

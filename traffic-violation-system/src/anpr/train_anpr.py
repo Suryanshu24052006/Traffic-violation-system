@@ -1,6 +1,4 @@
 """
-train_anpr.py
-===============
 Fine-tunes a YOLOv8 detector for license-plate LOCALIZATION (the OCR step
 itself uses off-the-shelf EasyOCR - see plate_reader.py - it's the
 *detection* of where the plate is that benefits from fine-tuning).

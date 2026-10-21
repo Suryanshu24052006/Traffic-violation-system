@@ -1,6 +1,4 @@
 """
-helmet_detector.py
-====================
 Detects helmet / no-helmet on riders of two-wheelers.
 
 There is NO COCO class for "helmet" - unlike vehicle detection, this

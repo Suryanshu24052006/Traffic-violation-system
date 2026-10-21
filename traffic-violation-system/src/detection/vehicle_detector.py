@@ -1,6 +1,4 @@
 """
-vehicle_detector.py
-====================
 Vehicle detection wrapper around Ultralytics YOLO.
 
 Out of the box this loads a COCO-pretrained checkpoint (yolov8n.pt), which

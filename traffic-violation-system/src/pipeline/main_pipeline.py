@@ -1,6 +1,4 @@
 """
-main_pipeline.py
-===================
 Ties every module together: detection -> tracking -> per-vehicle violation
 checks (helmet / speed / truck-hours) -> ANPR -> DB lookup -> risk scoring
 -> logging -> annotated output video + heatmap + summary report.

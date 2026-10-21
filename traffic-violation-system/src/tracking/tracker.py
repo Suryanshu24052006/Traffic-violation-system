@@ -1,6 +1,4 @@
 """
-tracker.py
-==========
 Wraps `supervision`'s ByteTrack implementation to turn raw per-frame
 detections into persistent tracks with stable IDs across frames - this is
 what makes trajectories, speed estimation, and heatmaps possible at all.

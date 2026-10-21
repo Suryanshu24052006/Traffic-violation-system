@@ -1,6 +1,4 @@
 """
-db_manager.py
-=============
 Thin data-access layer over the mock "fixed database" (SQLite standing in for
 a real RTO / traffic-police / municipal-corporation records system - see
 schema.sql for the rationale). Every other module (risk engine, hotspot

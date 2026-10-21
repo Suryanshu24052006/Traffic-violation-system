@@ -1,6 +1,4 @@
 """
-plate_reader.py
-==================
 Automatic Number Plate Recognition (ANPR), two stages:
 
   1. Plate localization - like helmets, there's no COCO class for "license

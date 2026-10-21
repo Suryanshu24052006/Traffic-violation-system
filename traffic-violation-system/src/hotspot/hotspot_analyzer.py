@@ -1,6 +1,4 @@
 """
-hotspot_analyzer.py
-=====================
 Turns recurring violations at a camera location into a structured report a
 municipal corporation / traffic police department could act on - this is
 the "which junctions actually need attention" layer sitting on top of the

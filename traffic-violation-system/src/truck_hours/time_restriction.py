@@ -1,6 +1,4 @@
 """
-time_restriction.py
-====================
 Flags heavy vehicles (trucks/buses, configurable) present on a restricted
 road outside their permitted entry window - mirroring real heavy-vehicle
 entry-timing rules used in Indian metros (e.g. daytime truck bans on city

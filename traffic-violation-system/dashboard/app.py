@@ -1,6 +1,4 @@
 """
-dashboard/app.py
-===================
 Streamlit dashboard for the traffic-violation system:
   - Trajectory heatmap + latest annotated video output
   - Live violation log (from detected_violations table)

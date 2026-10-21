@@ -1,4 +1,4 @@
-# Smart Traffic Violation & Risk Profiling System
+# Traffic Violation & Risk Profiling System
 
 **Live demo:** https://trafficviolation-suryanshu.streamlit.app/ (free tier, may take a minute to wake up)
 
@@ -6,258 +6,96 @@
 
 ![detection on a busy junction: 20 vehicles found](docs/demo_detection.png)
 
-> All code lives in [`traffic-violation-system/`](traffic-violation-system/). Run the commands below from inside that folder.
+Code is in [`traffic-violation-system/`](traffic-violation-system/). Run the commands below from inside that folder.
 
-An end-to-end computer-vision system that detects and tracks vehicles from
-traffic camera footage, flags helmet / overspeeding / restricted-hour
-violations for cars, bikes, and trucks, reads license plates (ANPR), looks
-up each vehicle's - and each *driver's*, aggregated across every vehicle
-they own - history in a records database, computes a transparent risk
-score, and rolls recurring violations up into municipal accident-hotspot
-alerts for the traffic/road-safety authority. The same shape as real
-systems deployed by Indian traffic police (see
-[IIIT-Hyderabad's VIOLA project](https://blogs.iiit.ac.in/viola/) with
-Telangana Police).
+A computer vision project on traffic camera footage. It detects and tracks vehicles with YOLOv8, checks a few violations (overspeeding, trucks in restricted hours, no helmet), reads the number plate when there's a violation, looks up that vehicle and its owner in a records database, and gives a risk score. Violations at the same camera build up over time into a hotspot report for that junction.
 
-This repo is a **working, tested skeleton** - detection, tracking, speed
-math, truck-hour logic, the database, and the risk engine all run and are
-verified end to end (see "What's verified working" below). Helmet detection
-and plate localization are wired up as pluggable components that need
-fine-tuning on real data to reach production accuracy - that fine-tuning
-step is the actual hard/interesting part of this project, not a missing
-afterthought. See `src/helmet/train_helmet.py` and `src/anpr/train_anpr.py`.
+I got the idea from IIIT Hyderabad's [VIOLA project](https://blogs.iiit.ac.in/viola/) with Telangana Police.
 
-## Why a "fixed database" instead of a real government system
+## Status
 
-Real RTO / traffic-police challan, DUI, hit-and-run, and municipal
-accident-history records aren't publicly accessible (and integrating with
-one for a portfolio project isn't legally sensible). `database/schema.sql`
-mirrors what such systems would expose; `database/seed_data.py` populates
-it with clearly-synthetic, fabricated Indian records (fictional names,
-random plates, fabricated license numbers). The pipeline, risk engine, and
-hotspot analyzer are written exactly as they'd be against real backends -
-only the data source is mocked. Swapping in a real data source later means
-changing `database/db_manager.py` only.
+What works now, without training anything:
 
-**Why the DB is keyed by license number, not name:** a vehicle has exactly
-one registered owner (`vehicles.owner_id`), but one person can own several
-vehicles - a driver-level risk score has to aggregate across all of them,
-and matching people by name string is unreliable (name collisions are
-common; a license/Aadhaar-linked ID is the actual unique key a real system
-would use). See the `owners` table in `schema.sql` for the full rationale.
+- vehicle detection (car, motorcycle, bus, truck) with COCO-pretrained YOLOv8, about 0.87 confidence on the sample bus image
+- tracking with ByteTrack, so each vehicle keeps its ID across frames
+- truck/bus restricted-hours check, including night windows that cross midnight
+- speed from a perspective transform. I checked the maths on a fake trajectory (25 m in 1 s = 90 km/h). It's off by default because every camera needs its own calibration, and it raises an error instead of giving wrong speeds
+- the database, the vehicle-level and driver-level risk scores, and the hotspot reports
+- the full pipeline on a test video: annotated video, snapshots, trajectory heatmap, violations logged to the DB
+- the Streamlit dashboard
 
-## Architecture
+What doesn't work yet:
 
-```
-video/CCTV feed
-      │
-      ▼
-┌─────────────────┐   COCO-pretrained YOLOv8 (car/motorcycle/bus/truck)
-│ VehicleDetector  │   works out of the box, no training needed
-└────────┬─────────┘
-         ▼
-┌─────────────────┐   ByteTrack - persistent IDs across frames
-│ VehicleTracker   │   builds per-vehicle trajectory history
-└────────┬─────────┘
-         │
-   ┌─────┼──────────────┬─────────────────┐
-   ▼     ▼               ▼                 ▼
-Helmet  Speed          Truck-hours       Heatmap
-check   estimator      checker           (from trajectories)
-(needs  (needs camera  (time-of-day
- fine-   calibration)   rule engine)
- tuning)
-   │     │               │
-   └─────┴───────┬───────┘
-                 ▼
-       any violation flagged?
-                 │  yes
-                 ▼
-        ┌─────────────────┐
-        │  ANPR (plate)    │  only runs when there's something to attach
-        └────────┬─────────┘  a plate to - not every vehicle every frame
-                 ▼
-        ┌─────────────────┐
-        │  DB lookup        │  challans / DUI / hit-and-run history -
-        └────────┬─────────┘  vehicle-level AND, via owner_id, driver-level
-                 ▼             (aggregated across every vehicle they own)
-        ┌─────────────────┐
-        │  Risk Engine       │  transparent weighted score, 0.0-1.0
-        └────────┬─────────┘  (vehicle score + separate driver score)
-                 ▼
-   logged to detected_violations (with camera_id + pixel/normalized
-   location) + shown on dashboard
-                 │
-                 ▼  accumulates across many runs/days at the same camera
-        ┌───────────────────┐
-        │  Hotspot Analyzer   │  cross-references accident_black_spots,
-        └────────┬───────────┘  computes a safety-priority score
-                 ▼
-   Municipal report (JSON + Markdown) + violation-density heatmap +
-   municipal_alerts audit-trail row - "which junctions need attention"
-```
-
-## What's verified working right now (no training required)
-
-- Vehicle detection + classification (car/motorcycle/bus/truck) - tested on
-  real imagery, ~0.87 confidence on a sample bus.
-- Multi-object tracking with persistent IDs and trajectory history.
-- Truck/bus restricted-hours violation logic, including overnight windows.
-- Speed math (perspective-transform based) - verified against a known
-  synthetic trajectory (25m in 1s = 90 km/h, correctly flagged over a 50
-  km/h limit). **Disabled by default** until you calibrate
-  `speed_estimation.source_polygon` in `config/config.yaml` against your own
-  camera - it fails loudly rather than silently returning wrong speeds.
-- The mock database (normalized schema - `owners` → `vehicles` → `challans`
-  / `intoxication_records` / `hit_and_run_cases`, plus `cameras` /
-  `accident_black_spots` - 45 synthetic owners, 72 vehicles, 8 camera
-  locations, 4 with black-spot history) and every query path.
-- The **vehicle-level** risk engine - verified to correctly separate a
-  clean vehicle (score ≈0), a heavily-flagged vehicle (score ≈0.89,
-  "critical"), and an unread plate (handled gracefully, not as an error).
-- The **driver-level** risk engine - verified to correctly aggregate
-  challans/DUI/hit-and-run across every vehicle registered to one license
-  number (tested against a synthetic 4-vehicle owner and a 3-vehicle
-  "fleet" case), and to handle an unregistered license number gracefully.
-- ANPR pipeline mechanics (crop → OCR → regex-clean → validate) - OCR itself
-  works via EasyOCR; the *plate-localization* fallback heuristic is
-  low-precision until you fine-tune a plate detector (see below).
-- The **hotspot analyzer / municipal reporting** - verified against three
-  cases: a known black spot with heavy recent violations (correctly scores
-  "critical" and recommends action matching the dominant violation type),
-  a location with no violations or accident history (correctly scores
-  "low"), and an unregistered camera_id (raises a clear error instead of
-  silently reporting on nothing). Generates a JSON report, a human-readable
-  Markdown report, a violation-density heatmap, and a persisted
-  `municipal_alerts` DB row per run.
-- The full pipeline end-to-end on a test video: detects, tracks, flags a
-  truck-hours violation, logs it to the DB with camera location and a risk
-  score, saves a snapshot, writes an annotated output video, generates a
-  trajectory heatmap, and - when run with `--camera-id` - automatically
-  produces a municipal hotspot report at the end.
-- The Streamlit dashboard boots and serves all five tabs (run output,
-  violation log, vehicle risk lookup, driver risk lookup, municipal hotspot
-  alerts).
-
-## What needs fine-tuning before this is production-accurate
-
-| Component | Why it needs real data | Where to start |
+| Part | Problem | Plan |
 |---|---|---|
-| Helmet detection | No COCO class for "helmet" - currently returns `unknown` honestly rather than guessing | `src/helmet/train_helmet.py` |
-| Plate localization | No COCO class for "license plate" - currently falls back to a crude heuristic crop | `src/anpr/train_anpr.py` |
-| Speed calibration | Every camera's pixel→real-world mapping is different | Recalibrate `source_polygon` in `config.yaml` against your footage |
-| Indian-road robustness | COCO-pretrained YOLO misses auto-rickshaws, struggles with occlusion-heavy Indian traffic scenes | Fine-tune the base detector on IDD / DriveIndia (see prior project research) |
+| Helmet detection | COCO has no helmet class, so it returns "unknown" for now | fine-tune with `src/helmet/train_helmet.py` |
+| Plate localisation | COCO has no plate class, so it uses a rough crop | fine-tune with `src/anpr/train_anpr.py` |
+| Speed | needs calibration per camera | set `source_polygon` in `config/config.yaml` |
+| Indian roads | pretrained YOLO misses auto-rickshaws and struggles with dense traffic | fine-tune on IDD |
 
-## Setup
+So there are no accuracy numbers for helmet or plates yet. Those need the fine-tuning first.
+
+## The database is fake
+
+Real RTO / challan / police records aren't public, so `database/seed_data.py` fills the schema with made-up Indian records (45 owners, 72 vehicles, 8 cameras, 4 of them known accident spots). Everything else is written as if it were a real backend, so only `database/db_manager.py` would change with real data.
+
+Owners are keyed by licence number, not name. One person can own several vehicles, and names clash all the time, so the licence number is the reliable key.
+
+## How it fits together
+
+```
+video -> YOLOv8 detection -> ByteTrack tracking
+      -> helmet / speed / truck-hours checks
+      -> if there's a violation: read plate -> look up vehicle + owner -> risk score
+      -> log to detected_violations (with camera id and position in frame)
+      -> over many runs at one camera: hotspot report for that junction
+```
+
+Plates are only read when there's a violation, not for every vehicle in every frame, which saves a lot of time.
+
+**Risk score.** A weighted rule score from 0 to 1 using past challans, unpaid challans, drunk-driving records and hit-and-run cases. Weights are in `config/config.yaml`. I used rules instead of a trained model because the data is synthetic, so a model would only learn my own fake patterns. There are two scores: one per vehicle, and one per driver that adds up everything across all their vehicles. That catches someone whose vehicles each look fine on their own but whose combined record is bad.
+
+**Hotspot report.** One clip seeing a violation doesn't make a dangerous junction. The analyzer looks at the last 30 days of violations at a camera, combines that with the accident history for that spot, and gives a priority score, a suggested action based on the most common violation type there, and a heatmap of where in the frame violations happen. It writes a JSON and Markdown report and saves an alert row in the DB.
+
+## Running it
 
 ```bash
 pip install -r requirements.txt
-python scripts/init_db.py                     # creates + seeds the mock DB
+python scripts/init_db.py          # create and seed the fake DB
 
-# basic run (no municipal reporting):
-python -m src.pipeline.main_pipeline \
-    --video path/to/your_clip.mp4 \
-    --start-datetime "2026-08-18 14:30:00"
+python -m src.pipeline.main_pipeline --video your_clip.mp4 --start-datetime "2026-08-18 14:30:00"
 
-# with a registered camera location -> also persists violation locations
-# and auto-generates a municipal hotspot report at the end of the run:
-python -m src.pipeline.main_pipeline \
-    --video path/to/your_clip.mp4 \
-    --start-datetime "2026-08-18 14:30:00" \
-    --camera-id CAM02        # see database/seed_data.py for pre-registered IDs
-
+# add --camera-id CAM02 to also save violation locations and make a hotspot report
 streamlit run dashboard/app.py
 ```
 
-Look up any of the sample plate/license numbers `scripts/init_db.py` prints
-after seeding, in the dashboard's Vehicle Risk Lookup / Driver Risk Lookup
-tabs, to see the risk scoring live.
+The dashboard's lookup tabs accept the sample plates and licence numbers that `init_db.py` prints.
 
-## Honest evaluation plan (do this before calling it "done")
+## What I'd measure once the models are fine-tuned
 
-Don't just report overall accuracy - for a violation-detection system,
-per-class recall on the *violation* class matters far more than aggregate
-accuracy (a missed no-helmet detection is a worse failure than a false
-alarm). Once you've fine-tuned the helmet/plate models on real data, report:
+- mAP for vehicles, and separately for helmet / no helmet
+- ID switches on a clip I label by hand
+- plate accuracy per character and per full plate, by lighting and distance
+- the false positive rate on violations, since this could end up issuing fines. I'd also note which conditions cause them (night, blur, occlusion)
 
-- Detection: mAP50-95 for vehicle classes, separately for helmet/no_helmet.
-- Tracking: MOTA/MOTP if you have ground-truth trajectories, or at minimum
-  ID-switch rate on a manually reviewed clip.
-- ANPR: character-level and full-plate accuracy, broken out by lighting/
-  distance conditions.
-- **False-positive rate on violations** - explicitly, since this system
-  could plausibly generate real fines. Document what conditions cause false
-  positives (night footage, motion blur, occlusion, unusual vehicle shapes)
-  and what you'd do about them before trusting this in the field.
-
-That failure-analysis section, written honestly, is what separates this
-from a tutorial rerun.
-
-## Driver-level risk & municipal hotspot reporting - design notes
-
-Two pieces were added on top of the base per-vehicle pipeline, both aimed at
-"who/where needs attention," not just "what happened right now":
-
-**Driver-level risk** (`RiskEngine.compute_driver_risk_score`,
-`DBManager.get_owner_profile`) aggregates challan/DUI/hit-and-run history
-across every vehicle registered to one license number. This surfaces a
-pattern a single-vehicle view can't: an operator with several vehicles,
-each individually unremarkable, whose *combined* record is a real problem
-(the classic fleet-compliance case). It's a separate score from the
-vehicle-level one deliberately - a clean truck driven by a high-risk owner,
-and a risky vehicle owned by an otherwise-clean owner, are different
-situations a real system should distinguish.
-
-**Municipal hotspot reporting** (`src/hotspot/hotspot_analyzer.py`) exists
-because "this camera saw a violation" and "this location is regularly
-accident-prone" are different claims - the second needs accumulated history,
-not one clip. That's why `detected_violations` persists `camera_id` and
-normalized frame-location on every write: the analyzer queries that
-accumulated history for a `camera_id` (default 30-day window, configurable),
-cross-references it against `accident_black_spots` (the municipal accident
-register - synthetic here, see the DB rationale above), and produces:
-
-- a `safety_priority_score` (violation density this window + historical
-  accident count + fatal-accident count, weighted, + any existing official
-  risk rating),
-- a recommended action matched to the *dominant* violation type at that
-  location (speed enforcement infrastructure for overspeeding, patrol
-  timing for helmet compliance, signage/timing review for truck-hours),
-- a violation-density heatmap for that location specifically (distinct from
-  the general vehicle-presence heatmap - this one shows where violations
-  cluster, not where traffic volume is highest),
-- a persisted `municipal_alerts` row (audit trail of what was reported and
-  when) plus a JSON + Markdown report file, suitable for actually handing to
-  a traffic engineer.
-
-Run `python -m src.pipeline.main_pipeline --video <clip> --camera-id CAM02`
-to see this generated automatically at the end of a run, or trigger it
-on-demand per camera from the dashboard's Municipal Hotspot Alerts tab.
-
-## Project layout
+## Files
 
 ```
-config/config.yaml          all thresholds, paths, model paths, municipal-report weights
-database/                   schema.sql, db_manager.py, seed_data.py
-src/detection/               YOLO vehicle detector (works out of the box)
-src/tracking/                 ByteTrack wrapper + trajectory history
-src/speed/                    perspective-transform speed estimator
-src/truck_hours/               time-of-day restriction checker
-src/helmet/                    helmet detector (pluggable) + train_helmet.py
-src/anpr/                      plate reader (pluggable) + train_anpr.py
-src/risk/                      vehicle- AND driver-level risk-scoring engine
-src/hotspot/                    municipal accident-hotspot analyzer + reports
-src/pipeline/                  ties everything together + heatmap generation
-dashboard/app.py               Streamlit UI (5 tabs)
-tests/                        smoke tests for DB, risk engine, hotspot analyzer
-scripts/init_db.py             one-shot DB init + seed
+config/config.yaml    thresholds, paths, weights
+database/             schema, DB access, fake data
+src/detection/        YOLO detector
+src/tracking/         ByteTrack + trajectories
+src/speed/            speed estimation
+src/truck_hours/      restricted-hours check
+src/helmet/           helmet detector + training script
+src/anpr/             plate reader + training script
+src/risk/             vehicle and driver risk scores
+src/hotspot/          hotspot reports
+src/pipeline/         runs everything + heatmaps
+dashboard/app.py      Streamlit app
+tests/                tests for the DB, risk engine and hotspot analyzer
 ```
 
-## Legal/ethical note
+## Note
 
-This is a portfolio/learning project. The database is entirely synthetic.
-A real deployment generating actual fines would need: much higher accuracy
-bars than a portfolio project targets, a human-review step before any fine
-is issued (false positives have real consequences), formal legal
-authorization to access real vehicle/challan records, and a privacy/data-
-retention policy for captured footage and plate data.
+This is a learning project and the data is synthetic. Using it for real fines would need much better accuracy, a person checking every violation before a fine goes out, legal access to real records, and rules for how long footage and plate data are kept.

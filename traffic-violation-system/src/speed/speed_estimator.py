@@ -1,6 +1,4 @@
 """
-speed_estimator.py
-===================
 Estimates real-world speed (km/h) from a tracked vehicle's pixel trajectory
 using a perspective transform (homography) from camera pixel-space to a
 real-world top-down plane, calibrated in meters.
