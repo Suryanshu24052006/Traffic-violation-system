@@ -12,14 +12,21 @@ Streamlit dashboard for the traffic-violation system:
 Run:  streamlit run dashboard/app.py
 """
 
+import os
 import sys
 from pathlib import Path
 
+import cv2
+import numpy as np
 import pandas as pd
 import streamlit as st
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# config paths are relative to the project folder, so run from there
+# (streamlit cloud starts the app from the repo root)
+os.chdir(PROJECT_ROOT)
+sys.path.insert(0, str(PROJECT_ROOT))
 from database.db_manager import DBManager  # noqa: E402
 from src.risk.risk_engine import RiskEngine  # noqa: E402
 from src.hotspot.hotspot_analyzer import HotspotAnalyzer  # noqa: E402
@@ -29,11 +36,27 @@ st.set_page_config(page_title="Traffic Violation & Risk Profiling System", layou
 
 @st.cache_resource
 def load_config():
-    with open(Path(__file__).parent.parent / "config" / "config.yaml") as f:
+    with open(PROJECT_ROOT / "config" / "config.yaml") as f:
         return yaml.safe_load(f)
 
 
+@st.cache_resource
+def ensure_database(db_path):
+    # fresh deploys have no database file (it's gitignored), seed the mock data once
+    if not Path(db_path).exists():
+        from database.seed_data import seed
+        seed()
+    return True
+
+
+@st.cache_resource
+def load_detector():
+    from src.detection.vehicle_detector import VehicleDetector
+    return VehicleDetector(config)
+
+
 config = load_config()
+ensure_database(config["database"]["path"])
 db = DBManager(config["database"]["path"])
 risk_engine = RiskEngine(config)
 hotspot_analyzer = HotspotAnalyzer(config, db)
@@ -45,10 +68,42 @@ st.caption(
     "municipal accident-hotspot alerts. Database is synthetic demo data — see README for why."
 )
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📹 Run Output", "📋 Violation Log", "🔍 Vehicle Risk Lookup",
+tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🎯 Try Detection", "📹 Run Output", "📋 Violation Log", "🔍 Vehicle Risk Lookup",
     "🪪 Driver Risk Lookup", "🚧 Municipal Hotspot Alerts",
 ])
+
+# --------------------------------------------------------------------- #
+with tab0:
+    st.subheader("Vehicle detection on an image")
+    st.caption("Runs the same YOLOv8 detector the video pipeline uses (COCO-pretrained, CPU). "
+               "Upload a road photo, or use the sample image.")
+    uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    sample_path = PROJECT_ROOT / "data" / "sample_images" / "bus.jpg"
+
+    if uploaded is not None:
+        image = cv2.imdecode(np.frombuffer(uploaded.read(), np.uint8), cv2.IMREAD_COLOR)
+    else:
+        image = cv2.imread(str(sample_path))
+        st.caption("Showing the sample image.")
+
+    if image is None:
+        st.error("Couldn't read that image.")
+    else:
+        with st.spinner("Detecting (the first run also downloads the model weights)..."):
+            detections = load_detector().detect(image)
+        annotated = image.copy()
+        for d in detections:
+            x1, y1, x2, y2 = map(int, d.xyxy)
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 200, 0), 2)
+            cv2.putText(annotated, f"{d.class_name} {d.confidence:.2f}", (x1, max(y1 - 6, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 0), 2)
+        c1, c2 = st.columns([3, 1])
+        c1.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), use_container_width=True)
+        c2.metric("Vehicles found", len(detections))
+        if detections:
+            c2.dataframe(pd.DataFrame([{"type": d.class_name, "confidence": round(d.confidence, 2)}
+                                       for d in detections]), hide_index=True)
 
 # --------------------------------------------------------------------- #
 with tab1:

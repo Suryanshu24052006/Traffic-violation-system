@@ -1,0 +1,13 @@
+# used by Streamlit Cloud to deploy the dashboard (the full project deps are in traffic-violation-system/requirements.txt)
+# cpu-only torch, the default one pulls ~3 GB of cuda libraries
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+ultralytics>=8.3.0
+supervision>=0.24.0,<0.31.0
+opencv-python-headless>=4.10.0
+numpy>=1.26.0
+pandas>=2.2.0
+pyyaml>=6.0.1
+streamlit>=1.38.0
+plotly>=5.24.0
