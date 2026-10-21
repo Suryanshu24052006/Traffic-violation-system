@@ -1,5 +1,11 @@
 # Smart Traffic Violation & Risk Profiling System
 
+**Live demo:** https://trafficviolation-suryanshu.streamlit.app/ (free tier, may take a minute to wake up)
+
+![dashboard](../docs/demo_dashboard.png)
+
+![detection on a busy junction: 20 vehicles found](../docs/demo_detection.png)
+
 An end-to-end computer-vision system that detects and tracks vehicles from
 traffic camera footage, flags helmet / overspeeding / restricted-hour
 violations for cars, bikes, and trucks, reads license plates (ANPR), looks
