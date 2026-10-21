@@ -3,12 +3,12 @@ risk_engine.py
 ==============
 Computes a transparent, explainable "risk probability score" per vehicle.
 
-Design note (important — read before you present this in an interview):
+Design note:
 This is deliberately a WEIGHTED-RULE engine, not a trained ML classifier.
 A trained model needs labeled ground-truth outcomes (e.g. "did this vehicle
 actually re-offend within 6 months?") to learn from. Since the underlying
 database here is synthetic, training a classifier on it would just be
-learning noise and presenting it with false confidence — that's worse than
+learning noise and presenting it with false confidence - that's worse than
 not training one at all.
 
 The honest engineering path is:
@@ -71,7 +71,7 @@ class RiskEngine:
 
         if not profile.found:
             explanation.append(
-                "Plate not found in database (unregistered / misread) — "
+                "Plate not found in database (unregistered / misread) - "
                 "scored on current-session evidence only."
             )
 
@@ -126,7 +126,7 @@ class RiskEngine:
 
         category = self._categorize(score)
         if not explanation:
-            explanation.append("Clean record — no prior violations or flags found.")
+            explanation.append("Clean record - no prior violations or flags found.")
 
         return RiskResult(
             plate_number=profile.plate_number,

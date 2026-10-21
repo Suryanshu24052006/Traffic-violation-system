@@ -2,7 +2,7 @@
 seed_data.py
 ============
 Populates the mock "fixed database" with synthetic-but-realistic Indian
-records: drivers (owners, keyed by license number — see schema.sql for why
+records: drivers (owners, keyed by license number - see schema.sql for why
 that's the real key, not name), their vehicles, challan history,
 intoxication records, hit-and-run cases, plus municipal camera locations
 and accident black-spot history. Stands in for real RTO/traffic-police/
@@ -90,7 +90,7 @@ def random_date(days_back_max=1000) -> str:
 
 
 def seed_owners_and_vehicles(db: DBManager, n_owners: int = 45):
-    """Most owners have exactly 1 vehicle; a minority (fleet-like) have 2-4 —
+    """Most owners have exactly 1 vehicle; a minority (fleet-like) have 2-4 -
     this is what makes driver-level risk aggregation meaningfully different
     from vehicle-level in the demo data."""
     plates_by_owner = []
@@ -154,9 +154,9 @@ def seed_cameras_and_black_spots(db: DBManager):
         db.upsert_camera(camera_id, location_name, junction_type, city,
                           random_date(days_back_max=1800))
 
-    # A subset are known black spots with real accident history — the rest
+    # A subset are known black spots with real accident history - the rest
     # have none on file (which itself is meaningful: no prior data doesn't
-    # mean "safe", just "not yet flagged" — worth noting in the report).
+    # mean "safe", just "not yet flagged" - worth noting in the report).
     black_spot_config = [
         ("CAM01", 14, 2, "high"),
         ("CAM02", 27, 6, "critical"),

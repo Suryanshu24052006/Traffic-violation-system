@@ -5,10 +5,10 @@ Estimates real-world speed (km/h) from a tracked vehicle's pixel trajectory
 using a perspective transform (homography) from camera pixel-space to a
 real-world top-down plane, calibrated in meters.
 
-IMPORTANT — calibration is per-camera, not optional:
+IMPORTANT - calibration is per-camera, not optional:
 `source_polygon` in config.yaml must be four pixel coordinates (in the
 actual camera view) that correspond to a real-world rectangle of known
-width/height (`target_width_m` / `target_height_m`) — e.g. the corners of a
+width/height (`target_width_m` / `target_height_m`) - e.g. the corners of a
 marked lane segment, or two lamp posts of known spacing. Shipping this with
 placeholder zeros means speed numbers are NOT meaningful until you calibrate
 against your own footage. This module will raise clearly if you try to use

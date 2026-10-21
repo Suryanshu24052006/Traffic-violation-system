@@ -3,13 +3,13 @@ plate_reader.py
 ==================
 Automatic Number Plate Recognition (ANPR), two stages:
 
-  1. Plate localization — like helmets, there's no COCO class for "license
+  1. Plate localization - like helmets, there's no COCO class for "license
      plate", so this needs a fine-tuned detector (see train_anpr.py). Falls
      back to a simple heuristic crop (lower-half of the vehicle bounding
-     box) if no fine-tuned model is present — much lower precision, clearly
+     box) if no fine-tuned model is present - much lower precision, clearly
      documented as a fallback rather than a real solution.
 
-  2. OCR — EasyOCR works reasonably out of the box, but Indian plates need
+  2. OCR - EasyOCR works reasonably out of the box, but Indian plates need
      post-processing: font styles vary a lot, so raw OCR output gets
      cleaned up with a regex + common-confusion character correction
      (0/O, 1/I, 8/B, 5/S) before being accepted.
@@ -69,7 +69,7 @@ class PlateReader:
                 x1, y1, x2, y2 = map(int, best.xyxy[0].tolist())
                 return vehicle_crop[y1:y2, x1:x2]
         # Fallback heuristic: plates sit in roughly the lower-middle third
-        # of a vehicle's bounding box. Low precision — for demo purposes
+        # of a vehicle's bounding box. Low precision - for demo purposes
         # only until a fine-tuned plate detector is plugged in.
         h, w = vehicle_crop.shape[:2]
         return vehicle_crop[int(h * 0.6):h, int(w * 0.2):int(w * 0.8)]
@@ -93,7 +93,7 @@ class PlateReader:
 
         if not is_valid:
             # retry with common OCR confusion-character correction on the
-            # numeric segments only — don't blanket-apply, it can break
+            # numeric segments only - don't blanket-apply, it can break
             # otherwise-correct reads.
             corrected = self._try_confusion_correction(cleaned)
             if corrected and INDIA_PLATE_RE.match(corrected):

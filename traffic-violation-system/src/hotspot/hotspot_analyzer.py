@@ -2,27 +2,27 @@
 hotspot_analyzer.py
 =====================
 Turns recurring violations at a camera location into a structured report a
-municipal corporation / traffic police department could act on — this is
+municipal corporation / traffic police department could act on - this is
 the "which junctions actually need attention" layer sitting on top of the
 per-vehicle violation detection.
 
 Two distinct outputs, deliberately kept separate:
 
-  1. A MunicipalReport — aggregated, numeric, persisted to the DB
+  1. A MunicipalReport - aggregated, numeric, persisted to the DB
      (`municipal_alerts` table) and written as JSON + a human-readable
      Markdown summary. This is what you'd actually hand to a traffic
      engineer or forward to a municipal dashboard.
 
-  2. A within-frame violation-density heatmap — WHERE inside the camera's
+  2. A within-frame violation-density heatmap - WHERE inside the camera's
      view violations cluster (distinct from the general vehicle-presence
      heatmap in src/pipeline/heatmap.py, which shows traffic volume, not
      violations specifically).
 
 Design note on "regularly accident-prone": a single video clip's worth of
-violations isn't enough to call a location accident-prone — that requires
+violations isn't enough to call a location accident-prone - that requires
 looking at accumulated history for that camera_id across many runs/days.
 That's exactly why detected_violations persists camera_id + location to the
-DB rather than staying in pipeline memory — this module queries that
+DB rather than staying in pipeline memory - this module queries that
 accumulated history, not just the current run's in-memory state.
 """
 
@@ -76,7 +76,7 @@ class HotspotAnalyzer:
         camera = self.db.get_camera(camera_id)
         if camera is None:
             raise ValueError(
-                f"Unknown camera_id '{camera_id}' — register it via "
+                f"Unknown camera_id '{camera_id}' - register it via "
                 f"DBManager.upsert_camera() before analyzing (see database/seed_data.py)."
             )
 
@@ -158,7 +158,7 @@ class HotspotAnalyzer:
 
         fatal_component = min(fatal_accident_count / 5.0, 1.0)  # 5+ fatalities = max
         if fatal_accident_count > 0:
-            explanation.append(f"{fatal_accident_count} of those were fatal — weighted heavily.")
+            explanation.append(f"{fatal_accident_count} of those were fatal - weighted heavily.")
 
         rating_map = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
         rating_component = rating_map.get(official_rating, 0.0)
@@ -229,15 +229,15 @@ class HotspotAnalyzer:
         breakdown_lines = "\n".join(f"- {k}: {v}" for k, v in r.violation_breakdown.items()) or "- none"
         explanation_lines = "\n".join(f"- {line}" for line in r.explanation)
         black_spot_line = (
-            f"**Known accident black spot** — {r.historical_accident_count} historical "
+            f"**Known accident black spot** - {r.historical_accident_count} historical "
             f"accident(s), {r.fatal_accident_count} fatal, official rating: "
             f"{r.official_risk_rating}."
             if r.is_known_black_spot else
             "Not currently on the municipal black-spot register (absence of prior data "
-            "isn't the same as 'safe' — just 'not yet flagged')."
+            "isn't the same as 'safe' - just 'not yet flagged')."
         )
 
-        return f"""# Municipal Traffic Safety Alert — {r.location_name} ({r.camera_id})
+        return f"""# Municipal Traffic Safety Alert - {r.location_name} ({r.camera_id})
 
 **Generated:** {r.generated_at}
 **Window analyzed:** last {r.lookback_days} days
@@ -262,7 +262,7 @@ class HotspotAnalyzer:
 {r.recommended_action}
 
 ---
-*This report is generated from a synthetic demo database — see README for why real
+*This report is generated from a synthetic demo database - see README for why real
 municipal integration would require formal data-sharing agreements. The scoring logic
 and report structure are written as they would be for a real deployment.*
 """

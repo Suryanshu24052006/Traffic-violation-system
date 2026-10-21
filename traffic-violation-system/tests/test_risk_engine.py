@@ -1,9 +1,9 @@
 """
-Quick smoke tests for the DB layer + risk engine — run without any video/model.
+Quick smoke tests for the DB layer + risk engine - run without any video/model.
     python -m pytest tests/test_risk_engine.py -v
 
 Each test gets its own throwaway SQLite file (tempfile) so runs are
-isolated and repeatable — reusing the shared demo DB across test runs would
+isolated and repeatable - reusing the shared demo DB across test runs would
 silently accumulate challans/records and make assertions drift over time.
 """
 import sys

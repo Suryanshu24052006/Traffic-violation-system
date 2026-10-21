@@ -2,7 +2,7 @@
 db_manager.py
 =============
 Thin data-access layer over the mock "fixed database" (SQLite standing in for
-a real RTO / traffic-police / municipal-corporation records system — see
+a real RTO / traffic-police / municipal-corporation records system - see
 schema.sql for the rationale). Every other module (risk engine, hotspot
 analyzer, pipeline, dashboard) should go through this class rather than
 writing raw SQL inline.
@@ -41,7 +41,7 @@ class VehicleProfile:
 
 @dataclass
 class DriverProfile:
-    """Aggregated across every vehicle registered to one license number —
+    """Aggregated across every vehicle registered to one license number -
     see schema.sql's note on why license_number (not name) is the key."""
     license_number: str
     name: Optional[str]
@@ -78,7 +78,7 @@ class DBManager:
             conn.executescript(SCHEMA_PATH.read_text())
 
     # ------------------------------------------------------------------ #
-    # Write path — seeding / historical records
+    # Write path - seeding / historical records
     # ------------------------------------------------------------------ #
     def upsert_owner(self, name, license_number, city, state) -> int:
         with self._conn() as conn:
@@ -158,7 +158,7 @@ class DBManager:
             )
 
     # ------------------------------------------------------------------ #
-    # Write path — live pipeline output
+    # Write path - live pipeline output
     # ------------------------------------------------------------------ #
     def log_detected_violation(self, plate_number, track_id, camera_id, timestamp,
                                 violation_type, details, confidence,
@@ -191,7 +191,7 @@ class DBManager:
             )
 
     # ------------------------------------------------------------------ #
-    # Read path — vehicle / driver profiles
+    # Read path - vehicle / driver profiles
     # ------------------------------------------------------------------ #
     def get_vehicle_profile(self, plate_number: str) -> VehicleProfile:
         with self._conn() as conn:
@@ -245,7 +245,7 @@ class DBManager:
 
     def get_owner_profile(self, license_number: str) -> DriverProfile:
         """Aggregates violation/DUI/hit-and-run history across EVERY vehicle
-        registered to this license number — this is what makes it a
+        registered to this license number - this is what makes it a
         *driver*-level score rather than a single-vehicle score."""
         with self._conn() as conn:
             owner = conn.execute(
@@ -320,7 +320,7 @@ class DBManager:
         return [dict(r) for r in rows]
 
     # ------------------------------------------------------------------ #
-    # Read path — cameras / accident hotspots (used by hotspot_analyzer)
+    # Read path - cameras / accident hotspots (used by hotspot_analyzer)
     # ------------------------------------------------------------------ #
     def get_all_camera_ids(self) -> list[str]:
         with self._conn() as conn:

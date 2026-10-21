@@ -13,7 +13,7 @@ pandas>=2.2.0
 pyyaml>=6.0.1
 
 # Database
-# (sqlite3 is stdlib — no install needed)
+# (sqlite3 is stdlib - no install needed)
 
 # Dashboard
 streamlit>=1.38.0

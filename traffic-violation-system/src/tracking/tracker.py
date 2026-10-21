@@ -2,7 +2,7 @@
 tracker.py
 ==========
 Wraps `supervision`'s ByteTrack implementation to turn raw per-frame
-detections into persistent tracks with stable IDs across frames — this is
+detections into persistent tracks with stable IDs across frames - this is
 what makes trajectories, speed estimation, and heatmaps possible at all.
 
 Also maintains a rolling position history per track_id, which the speed
@@ -25,7 +25,7 @@ class VehicleTracker:
             lost_track_buffer=tcfg["lost_track_buffer"],
             minimum_matching_threshold=tcfg["minimum_matching_threshold"],
         )
-        # Only track classes the system actually cares about — the raw YOLO
+        # Only track classes the system actually cares about - the raw YOLO
         # model also detects 'person' and everything else in COCO, and
         # without this filter those get tracked/heatmapped/annotated as if
         # they were vehicles too.
@@ -71,7 +71,7 @@ class VehicleTracker:
         return list(self.history.get(track_id, []))
 
     def get_all_points(self) -> np.ndarray:
-        """Flat array of every (x, y) point ever tracked — used for the heatmap."""
+        """Flat array of every (x, y) point ever tracked - used for the heatmap."""
         pts = []
         for pts_deque in self.history.values():
             pts.extend([(p[1], p[2]) for p in pts_deque])

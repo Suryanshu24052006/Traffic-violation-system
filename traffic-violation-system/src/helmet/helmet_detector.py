@@ -3,11 +3,11 @@ helmet_detector.py
 ====================
 Detects helmet / no-helmet on riders of two-wheelers.
 
-There is NO COCO class for "helmet" — unlike vehicle detection, this
+There is NO COCO class for "helmet" - unlike vehicle detection, this
 genuinely requires a fine-tuned model. This module is written to be a drop-in
 once you've trained one (see train_helmet.py), and falls back to a clearly
 labeled "UNKNOWN" state if no fine-tuned weights are present, rather than
-silently guessing — a system that flags fines should never fabricate a
+silently guessing - a system that flags fines should never fabricate a
 result it has no evidence for.
 """
 

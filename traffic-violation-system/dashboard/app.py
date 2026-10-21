@@ -65,7 +65,7 @@ st.title("🚦 Smart Traffic Violation & Risk Profiling System")
 st.caption(
     "Vehicle detection & tracking · trajectory heatmaps · helmet / speed / "
     "truck-hours violations · ANPR · database-driven risk scoring · "
-    "municipal accident-hotspot alerts. Database is synthetic demo data — see README for why."
+    "municipal accident-hotspot alerts. Database is synthetic demo data - see README for why."
 )
 
 tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -116,7 +116,7 @@ with tab1:
         if heatmap_path.exists():
             st.image(str(heatmap_path), use_container_width=True)
         else:
-            st.info("No heatmap yet — run the pipeline first:\n\n"
+            st.info("No heatmap yet - run the pipeline first:\n\n"
                     "`python -m src.pipeline.main_pipeline --video <path>`")
 
     with col2:
@@ -125,7 +125,7 @@ with tab1:
         if video_path.exists():
             st.video(str(video_path))
         else:
-            st.info("No annotated video yet — run the pipeline first.")
+            st.info("No annotated video yet - run the pipeline first.")
 
 # --------------------------------------------------------------------- #
 with tab2:
@@ -172,7 +172,7 @@ with tab3:
             st.write(f"**Intoxication records:** {profile.intoxication_count}")
             st.write(f"**Open hit-and-run cases:** {profile.open_hit_and_run_count}")
             st.caption(
-                "💡 This owner may have other vehicles too — see the Driver Risk Lookup "
+                "💡 This owner may have other vehicles too - see the Driver Risk Lookup "
                 "tab for the aggregated view across everything registered to their license."
             )
 
@@ -188,7 +188,7 @@ with tab3:
 with tab4:
     st.subheader("Look up a driver's aggregated risk profile")
     st.caption(
-        "Keyed by license number, not name — see schema.sql for why name-matching "
+        "Keyed by license number, not name - see schema.sql for why name-matching "
         "isn't reliable (two people can share a name; a license number is unique)."
     )
     all_licenses = db.get_all_license_numbers()
@@ -230,7 +230,7 @@ with tab5:
     st.caption(
         "Aggregates recurring violations per camera location, cross-referenced against "
         "known accident black-spot history, into a safety-priority score and recommended "
-        "action — see src/hotspot/hotspot_analyzer.py."
+        "action - see src/hotspot/hotspot_analyzer.py."
     )
 
     camera_ids = db.get_all_camera_ids()
@@ -279,5 +279,5 @@ with tab5:
     if alerts:
         st.dataframe(pd.DataFrame(alerts), use_container_width=True, hide_index=True)
     else:
-        st.info("No municipal alerts generated yet — run the pipeline with --camera-id, "
+        st.info("No municipal alerts generated yet - run the pipeline with --camera-id, "
                 "or generate one above.")

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Smart Traffic Violation & Risk Profiling System — DB Schema
+-- Smart Traffic Violation & Risk Profiling System - DB Schema
 -- =============================================================================
 -- This is a MOCK / SIMULATED database standing in for a real state transport
 -- department (RTO) + traffic police records system, PLUS a municipal
@@ -8,7 +8,7 @@
 -- accessible (and integrating with one would require formal government API
 -- access / legal authorization). The schema below mirrors what such systems
 -- would expose, so the pipeline and risk engine are written exactly as they
--- would be against real backends — only the data source is synthetic.
+-- would be against real backends - only the data source is synthetic.
 
 PRAGMA foreign_keys = ON;
 
@@ -16,12 +16,12 @@ PRAGMA foreign_keys = ON;
 -- Owners / drivers
 -- -----------------------------------------------------------------------
 -- IMPORTANT design note: a real system must identify a driver by a unique
--- ID (driving license number, or an Aadhaar-linked ID) — NOT by name.
+-- ID (driving license number, or an Aadhaar-linked ID) - NOT by name.
 -- Names collide ("Rahul Sharma" is not unique across even one city). This
 -- is why `license_number` is the actual primary lookup key, and why
 -- `get_owner_profile()` in db_manager.py takes a license number, not a
 -- name string. A vehicle can only have one registered owner, but one
--- owner/driver can be linked to multiple vehicles — which is exactly what
+-- owner/driver can be linked to multiple vehicles - which is exactly what
 -- makes a *driver*-level risk score different from a *vehicle*-level one
 -- (e.g. a fleet operator with 5 trucks, each individually "low risk", who
 -- is nonetheless accumulating violations across the fleet).
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS hit_and_run_cases (
 -- -----------------------------------------------------------------------
 -- Cameras / locations + municipal accident history
 -- -----------------------------------------------------------------------
--- A "camera" here means a fixed junction/road-segment install point — this
+-- A "camera" here means a fixed junction/road-segment install point - this
 -- is what lets violations recorded over many separate video runs be
 -- aggregated into a per-location pattern over time ("regularly
 -- accident-prone", not just "this one clip had a lot of violations").
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS cameras (
 );
 
 -- Historical accident data for a location, as the municipal corporation /
--- traffic police would maintain it. Synthetic here (see note above) — a
+-- traffic police would maintain it. Synthetic here (see note above) - a
 -- real integration would pull this from a municipal road-safety database.
 CREATE TABLE IF NOT EXISTS accident_black_spots (
     spot_id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS accident_black_spots (
 -- -----------------------------------------------------------------------
 -- Live pipeline output
 -- -----------------------------------------------------------------------
--- Distinct from `challans` (pre-existing historical fines) — this is what
+-- Distinct from `challans` (pre-existing historical fines) - this is what
 -- the CV pipeline itself WRITES TO as it processes footage. Includes
 -- location fields so violations accumulate into a per-camera history that
 -- the hotspot analyzer can mine for recurring patterns.
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS detected_violations (
 );
 
 -- -----------------------------------------------------------------------
--- Municipal alerts — audit trail of what was reported and when
+-- Municipal alerts - audit trail of what was reported and when
 -- -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS municipal_alerts (
     alert_id               INTEGER PRIMARY KEY AUTOINCREMENT,

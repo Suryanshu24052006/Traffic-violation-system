@@ -4,12 +4,12 @@ vehicle_detector.py
 Vehicle detection wrapper around Ultralytics YOLO.
 
 Out of the box this loads a COCO-pretrained checkpoint (yolov8n.pt), which
-already includes car / motorcycle / bus / truck as native classes — so
+already includes car / motorcycle / bus / truck as native classes - so
 detection + basic classification works immediately with ZERO training.
 
 For production accuracy on Indian roads (auto-rickshaws, dense occlusion,
 non-standard vehicle shapes) you'd fine-tune on IDD / DriveIndia and point
-`model_path` at those weights instead — see models/README.md.
+`model_path` at those weights instead - see models/README.md.
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ class VehicleDetector:
         return detections
 
     def detect_raw(self, frame: np.ndarray):
-        """Returns the raw ultralytics Results object — used when the caller
+        """Returns the raw ultralytics Results object - used when the caller
         wants a supervision.Detections conversion (see tracker.py)."""
         return self.model.predict(
             frame, conf=self.conf_threshold, device=self.device, verbose=False

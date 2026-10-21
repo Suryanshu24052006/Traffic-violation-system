@@ -15,10 +15,10 @@ Design choices worth noting in a writeup:
     model that hasn't been fine-tuned yet returns "unknown"/heuristic
     results instead of fabricating confident-looking output.
   - ANPR is only run when a violation is actually flagged (not on every
-    vehicle every frame) — it's the most expensive step, and there's no
+    vehicle every frame) - it's the most expensive step, and there's no
     reason to OCR a compliant vehicle's plate.
   - The risk score is recomputed and logged at the moment of each detected
-    violation, using whatever DB history exists *at that time* — this
+    violation, using whatever DB history exists *at that time* - this
     mirrors how a real system would work (you don't get to retroactively
     know about a violation that hasn't happened yet).
 """
@@ -88,7 +88,7 @@ class TrafficViolationPipeline:
         h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         if camera_id and self.db.get_camera(camera_id) is None:
-            print(f"[WARN] camera_id '{camera_id}' not registered — auto-registering as an "
+            print(f"[WARN] camera_id '{camera_id}' not registered - auto-registering as an "
                   f"unmapped location. Register it properly via DBManager.upsert_camera() "
                   f"for real municipal reporting (see database/seed_data.py).")
             self.db.upsert_camera(camera_id, f"Unregistered location ({camera_id})",
@@ -173,7 +173,7 @@ class TrafficViolationPipeline:
         if camera_id and generate_municipal_report:
             municipal_report = self.hotspot_analyzer.analyze_camera(camera_id)
             print(
-                f"\n[MUNICIPAL REPORT] {municipal_report.location_name} ({camera_id}) — "
+                f"\n[MUNICIPAL REPORT] {municipal_report.location_name} ({camera_id}) - "
                 f"priority={municipal_report.priority_level} "
                 f"(score={municipal_report.safety_priority_score}) | "
                 f"{municipal_report.recommended_action}"

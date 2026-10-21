@@ -1,5 +1,5 @@
 """
-Smoke tests for the municipal hotspot analyzer — isolated temp DB, no
+Smoke tests for the municipal hotspot analyzer - isolated temp DB, no
 video/model required.
     python -m pytest tests/test_hotspot.py -v
 """

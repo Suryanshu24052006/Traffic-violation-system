@@ -1,8 +1,8 @@
 # =============================================================================
-# Smart Traffic Violation & Risk Profiling System — Configuration
+# Smart Traffic Violation & Risk Profiling System - Configuration
 # =============================================================================
 # All thresholds below are configurable and set to typical Indian traffic-law
-# defaults. Adjust per city/state (these vary — e.g. Delhi vs. Bengaluru have
+# defaults. Adjust per city/state (these vary - e.g. Delhi vs. Bengaluru have
 # different heavy-vehicle entry timing rules).
 
 detection:
@@ -63,14 +63,14 @@ truck_hours:
   # anything detected OUTSIDE the allowed_window on a restricted road = violation
 
 helmet:
-  model: "models/helmet_yolov8.pt"   # NOT included — must be fine-tuned,
+  model: "models/helmet_yolov8.pt"   # NOT included - must be fine-tuned,
                                        # see src/helmet/train_helmet.py
   confidence_threshold: 0.4
   applies_to_classes:
     - motorcycle
 
 anpr:
-  detector_model: "models/plate_yolov8.pt"  # NOT included — see src/anpr/train_anpr.py
+  detector_model: "models/plate_yolov8.pt"  # NOT included - see src/anpr/train_anpr.py
   ocr_engine: "easyocr"                      # or "paddleocr"
   ocr_languages: ["en"]
   # Indian plate format: 2 letters (state) + 2 digits (RTO code) +
@@ -92,7 +92,7 @@ risk_engine:
     high: 0.75
     # >= high -> "critical"
 
-  # Driver-level (license-number-keyed) score — aggregates across every
+  # Driver-level (license-number-keyed) score - aggregates across every
   # vehicle registered to one person, so caps are scaled up accordingly.
   # See db_manager.get_owner_profile / risk_engine.compute_driver_risk_score.
   driver_weights:
@@ -113,7 +113,7 @@ paths:
   violation_snapshots_dir: "outputs/snapshots"
   municipal_reports_dir: "outputs/municipal_reports"
 
-# Accident-hotspot / municipal-alert reporting — turns recurring violation
+# Accident-hotspot / municipal-alert reporting - turns recurring violation
 # patterns at a camera location into a structured report the municipal
 # corporation / traffic police could actually act on. See src/hotspot/.
 municipal:
